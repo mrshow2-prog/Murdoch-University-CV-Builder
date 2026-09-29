@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --cv-accent: #1B365D;
+    --murdoch-red: #E4002B;
+    --murdoch-navy: #1B365D;
+    --murdoch-gold: #FFCC00;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+  }
+}
+
+/* Custom Scrollbars matching original */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Header Background from Murdoch Dubai */
+.header-bg {
+  background-color: #1B365D;
+  background-image: linear-gradient(rgba(27, 54, 93, 0.88), rgba(128, 0, 32, 0.82)), url('https://www.murdochuniversitydubai.com/wp-content/uploads/mdub-aspire-cv-builder-lp-hero-banner-1440x260-1.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+.header-logo {
+  max-height: 38px;
+}
+
+/* Tab Active Styles from Original Tool */
+.nav-tab.active {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  border-bottom: 3px solid #ffcc00 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Paper Preview Dimensions */
+.cv-paper {
+  font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+  width: 210mm;
+  height: 297mm;
+  max-height: 297mm;
+  padding: 14mm 16mm;
+  background: white;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1);
+  color: #222222;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.cv-accent-text {
+  color: var(--cv-accent) !important;
+}
+
+.cv-accent-border {
+  border-color: var(--cv-accent) !important;
+}
+
+.cv-accent-bg {
+  background-color: var(--cv-accent) !important;
+}
+
+.cv-section-title {
+  font-size: 11pt;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-bottom: 1.5px solid;
+  padding-bottom: 2px;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.color-swatch input:checked + div {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--cv-accent);
+}
+
+/* Print CSS for Pixel-Perfect 1:1 Print-to-PDF Output */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0mm !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  html, body, #root, main {
+    background: #ffffff !important;
+    color: #222222 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  header, .left-panel, .no-print, .page-badge, button {
+    display: none !important;
+  }
+
+  #cv-preview-wrapper {
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .cv-paper {
+    box-shadow: none !important;
+    padding: 14mm 16mm !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    box-sizing: border-box !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden !important;
+    border: none !important;
+    position: relative !important;
+    background: white !important;
+  }
+
+  .cv-paper:last-child {
+    page-break-after: avoid !important;
+    break-after: auto !important;
+  }
+
+  .cv-item, .cv-section-title {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
