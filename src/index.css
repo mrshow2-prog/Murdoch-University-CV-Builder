@@ -118,7 +118,7 @@
     height: 0 !important;
   }
 
-  html, body, #root, main {
+  html, body, #root {
     background: #ffffff !important;
     color: #222222 !important;
     margin: 0 !important;
@@ -129,25 +129,57 @@
     overflow: visible !important;
   }
 
-  header, .left-panel, .no-print, .page-badge, button {
+  header, 
+  nav, 
+  .no-print, 
+  .page-badge, 
+  button,
+  input,
+  select,
+  .main-container > div:first-child,
+  #tab-builder > div:first-child,
+  .left-panel {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  main, 
+  #tab-builder, 
+  #preview-container, 
+  .right-panel {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  #preview-container > div:first-child {
     display: none !important;
   }
 
   #cv-preview-wrapper {
     transform: none !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     width: 210mm !important;
     display: block !important;
     overflow: visible !important;
+    position: static !important;
   }
 
   .cv-paper {
     box-shadow: none !important;
     padding: 14mm 16mm !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     width: 210mm !important;
     height: 297mm !important;
+    min-height: 297mm !important;
     max-height: 297mm !important;
     box-sizing: border-box !important;
     page-break-after: always !important;

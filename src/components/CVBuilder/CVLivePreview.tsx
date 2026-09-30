@@ -86,6 +86,9 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
       const page = document.createElement('div');
       page.className = 'cv-paper text-slate-800 shadow-2xl relative bg-white select-text print:mb-0';
       (page.style as any)['--cv-accent'] = accentColor;
+      page.style.position = 'relative';
+      page.style.boxSizing = 'border-box';
+      page.style.backgroundColor = '#ffffff';
 
       // Page Badge
       const badge = document.createElement('div');
@@ -93,12 +96,19 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
       badge.innerText = `Page ${pageNum}`;
       page.appendChild(badge);
 
-      // Footer Murdoch Red Logo
+      // Footer Murdoch Red Logo with rock-solid inline style constraints
       const footer = document.createElement('div');
       footer.className = 'absolute bottom-3.5 right-6 select-none opacity-85';
+      footer.style.position = 'absolute';
+      footer.style.bottom = '14px';
+      footer.style.right = '24px';
+      footer.style.userSelect = 'none';
+      footer.style.opacity = '0.85';
+      footer.style.zIndex = '10';
+
       footer.innerHTML = `
-        <div class="flex items-center gap-2.5 h-4.5">
-          <svg viewBox="0 0 240 60" class="h-4.5 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div style="display: flex; align-items: center; height: 20px; width: auto;">
+          <svg viewBox="0 0 240 60" width="80" height="20" style="height: 20px; width: 80px; max-height: 20px; max-width: 80px; display: block;" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M6 50V10H20.5L29 30.5L37.5 10H52V50H40.5V26.5L33 44.5H25L17.5 26.5V50H6Z" fill="#E4002B" />
             <path d="M58 10H70V34C70 41.5 74.5 45.5 81.5 45.5C88.5 45.5 93 41.5 93 34V10H105V34C105 48.5 95 55 81.5 55C68 55 58 48.5 58 34V10Z" fill="#E4002B" />
             <text x="114" y="26" fill="#E4002B" font-family="'Calibri', 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="900" letter-spacing="-0.5">Murdoch</text>
@@ -183,26 +193,29 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
 
           const subItems: string[] = [];
           if (item.grade) {
+            const cleanGrade = item.grade.replace(/^(Grade\s*\/\s*Classification|Grade|Classification):\s*/i, '');
             subItems.push(`
               <div class="text-[9.5pt] text-slate-700 flex items-start gap-2 mt-0.5">
                 <span class="shrink-0 text-slate-500 font-bold select-none">•</span>
-                <span class="flex-1 leading-snug">${escapeHtml(item.grade)}</span>
+                <span class="flex-1 leading-snug">${escapeHtml(cleanGrade)}</span>
               </div>
             `);
           }
           if (sec.showModules && item.modules) {
+            const cleanMod = item.modules.replace(/^(Relevant Coursework|Key Modules):\s*/i, '');
             subItems.push(`
               <div class="text-[9.5pt] text-slate-700 flex items-start gap-2 mt-0.5">
                 <span class="shrink-0 text-slate-500 font-bold select-none">•</span>
-                <span class="flex-1 leading-snug"><strong class="text-slate-800">Relevant Coursework:</strong> ${escapeHtml(item.modules)}</span>
+                <span class="flex-1 leading-snug">${escapeHtml(cleanMod)}</span>
               </div>
             `);
           }
           if (sec.showAwards && item.awards) {
+            const cleanAward = item.awards.replace(/^(Honors & Awards|Honours & Awards|Awards):\s*/i, '');
             subItems.push(`
               <div class="text-[9.5pt] text-slate-700 flex items-start gap-2 mt-0.5">
                 <span class="shrink-0 text-slate-500 font-bold select-none">•</span>
-                <span class="flex-1 leading-snug"><strong class="text-slate-800">Honors & Awards:</strong> ${escapeHtml(item.awards)}</span>
+                <span class="flex-1 leading-snug">${escapeHtml(cleanAward)}</span>
               </div>
             `);
           }

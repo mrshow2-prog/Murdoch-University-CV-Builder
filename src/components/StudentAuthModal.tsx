@@ -294,32 +294,10 @@ export const StudentAuthModal: React.FC<StudentAuthModalProps> = ({
 
                 {!isSecretAdminFlow && (
                   <p className="text-[11px] text-slate-500 mt-1.5">
-                    Sent to: <span className="font-semibold text-slate-800">{emailInput}</span>
+                    A 6-digit verification passcode was sent to: <span className="font-semibold text-slate-800">{emailInput}</span>
                   </p>
                 )}
               </div>
-
-              {/* Student OTP Delivery Simulator Banner (for instant testing/ease of access) */}
-              {!isSecretAdminFlow && generatedOtp && (
-                <div 
-                  onClick={() => setOtpInput(generatedOtp)}
-                  className="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 p-3 rounded-xl text-xs cursor-pointer transition flex items-center justify-between"
-                  title="Click to automatically paste OTP"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">📬</span>
-                    <div>
-                      <span className="font-bold">Student Inbox OTP: </span>
-                      <span className="font-mono bg-white px-2 py-0.5 rounded font-black text-indigo-700 border border-indigo-200 tracking-wider">
-                        {generatedOtp}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-indigo-600 font-semibold bg-white/80 px-2 py-0.5 rounded">
-                    Click to Autofill
-                  </span>
-                </div>
-              )}
 
               {errorMsg && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-xl flex items-center gap-2">

@@ -360,17 +360,17 @@ export async function exportToPDF(cvData: CVData, accentColorHex?: string, photo
         // Sub items (Grade, Relevant Coursework, Awards)
         if (edu.grade) {
           const cleanGrade = edu.grade.replace(/^(Grade\s*\/\s*Classification|Grade|Classification):\s*/i, '');
-          drawFormattedBullet(`Grade / Classification: ${cleanGrade}`, leftMargin + 2, contentWidth - 2);
+          drawFormattedBullet(cleanGrade, leftMargin + 2, contentWidth - 2);
         }
 
         if (section.showModules && edu.modules) {
           const cleanMod = edu.modules.replace(/^(Relevant Coursework|Key Modules):\s*/i, '');
-          drawFormattedBullet(`Relevant Coursework: ${cleanMod}`, leftMargin + 2, contentWidth - 2);
+          drawFormattedBullet(cleanMod, leftMargin + 2, contentWidth - 2);
         }
 
         if (section.showAwards && edu.awards) {
-          const cleanAward = edu.awards.replace(/^(Honors & Awards|Awards):\s*/i, '');
-          drawFormattedBullet(`Honors & Awards: ${cleanAward}`, leftMargin + 2, contentWidth - 2);
+          const cleanAward = edu.awards.replace(/^(Honors & Awards|Honours & Awards|Awards):\s*/i, '');
+          drawFormattedBullet(cleanAward, leftMargin + 2, contentWidth - 2);
         }
 
         y += 1.5;
@@ -469,131 +469,16 @@ export async function exportToPDF(cvData: CVData, accentColorHex?: string, photo
 
 /**
  * Native Vector Print / Save as PDF Function.
- * Triggers the browser's native print engine for 100% vector typography, 
+ * Triggers the browser's native print engine with 100% vector typography, 
  * sharp SVG logos, selectable text, and exact A4 page breaks with ZERO canvas distortion.
  */
 export function printCVNative(): void {
-  const wrapper = document.getElementById('cv-preview-wrapper');
-  if (!wrapper) return;
-
-  const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-    .map(s => s.outerHTML)
-    .join('\n');
-
-  const printHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Murdoch Dubai CV</title>
-        ${styles}
-        <style>
-          @page {
-            size: A4 portrait;
-            margin: 0mm !important;
-          }
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            box-sizing: border-box !important;
-          }
-          html, body {
-            background: #ffffff !important;
-            color: #222222 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 210mm !important;
-            font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important;
-            -webkit-font-smoothing: antialiased;
-          }
-          .page-badge, .no-print, button {
-            display: none !important;
-          }
-          #cv-preview-wrapper {
-            transform: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 210mm !important;
-            display: block !important;
-          }
-          .cv-paper {
-            box-shadow: none !important;
-            padding: 14mm 16mm !important;
-            margin: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
-            max-height: 297mm !important;
-            box-sizing: border-box !important;
-            page-break-after: always !important;
-            break-after: page !important;
-            overflow: hidden !important;
-            position: relative !important;
-            border: none !important;
-            background: white !important;
-          }
-          .cv-paper:last-child {
-            page-break-after: avoid !important;
-            break-after: auto !important;
-          }
-        </style>
-      </head>
-      <body>
-        <div id="cv-preview-wrapper">
-          ${wrapper.innerHTML}
-        </div>
-      </body>
-    </html>
-  `;
-
-  // Try pop-up window first
   try {
-    const printWin = window.open('', '_blank', 'width=900,height=1000');
-    if (printWin) {
-      printWin.document.open();
-      printWin.document.write(printHtml);
-      printWin.document.close();
-      setTimeout(() => {
-        try {
-          printWin.focus();
-          printWin.print();
-        } catch (e) {
-          console.warn("Print trigger error:", e);
-        }
-      }, 350);
-      return;
-    }
+    // Ensure all styles and fonts are ready, then trigger native print
+    window.print();
   } catch (e) {
-    console.warn("Pop-up window blocked, using hidden iframe...");
-  }
-
-  // Fallback to hidden iframe
-  let iframe = document.getElementById('cv-print-iframe') as HTMLIFrameElement;
-  if (!iframe) {
-    iframe = document.createElement('iframe');
-    iframe.id = 'cv-print-iframe';
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0px';
-    iframe.style.height = '0px';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-  }
-
-  const doc = iframe.contentWindow?.document;
-  if (doc) {
-    doc.open();
-    doc.write(printHtml);
-    doc.close();
-
-    setTimeout(() => {
-      try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      } catch (err) {
-        window.print();
-      }
-    }, 350);
-  } else {
+    console.error("Print trigger error:", e);
     window.print();
   }
 }
+
