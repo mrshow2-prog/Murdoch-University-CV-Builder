@@ -11,7 +11,10 @@ import {
   Zap,
   Compass,
   Camera,
-  Globe2
+  Globe2,
+  GraduationCap,
+  ShieldCheck,
+  Users
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -21,6 +24,10 @@ interface HeaderProps {
   onSaveClick: () => void;
   onPdfExport: () => void;
   onPrintPdf: () => void;
+  studentEmail: string | null;
+  isAdmin: boolean;
+  onOpenAuthModal: () => void;
+  onOpenAdminHub: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,7 +36,11 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadClick,
   onSaveClick,
   onPdfExport,
-  onPrintPdf
+  onPrintPdf,
+  studentEmail,
+  isAdmin,
+  onOpenAuthModal,
+  onOpenAdminHub
 }) => {
   return (
     <header className="text-white z-50 flex-shrink-0 no-print header-bg shadow-md border-b border-red-900">
@@ -49,15 +60,51 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Export / Load Buttons */}
+        {/* Student Sign In / Admin Hub & Export Buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* If Admin is logged in, show Admin Hub button */}
+          {isAdmin && (
+            <button
+              onClick={onOpenAdminHub}
+              className="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold py-1.5 px-3 rounded shadow transition flex items-center gap-1.5 border border-amber-200"
+              title="Open Student Management Dashboard"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Student CV Directory</span>
+            </button>
+          )}
+
+          {/* Student/Admin Account Status Button */}
+          <button
+            onClick={onOpenAuthModal}
+            className={`text-xs font-bold py-1.5 px-3.5 rounded shadow transition flex items-center gap-1.5 border ${
+              isAdmin
+                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-300'
+                : studentEmail 
+                  ? 'bg-emerald-700 hover:bg-emerald-600 text-white border-emerald-500' 
+                  : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 border-amber-300'
+            }`}
+            title={isAdmin ? "Logged in as Staff Administrator" : studentEmail ? `Signed in as ${studentEmail}` : "Sign in with @student.murdoch.edu.au email"}
+          >
+            {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <GraduationCap className="w-4 h-4" />}
+            <span>
+              {isAdmin 
+                ? 'Careers Admin' 
+                : studentEmail 
+                  ? studentEmail.split('@')[0] 
+                  : 'Student Sign In'}
+            </span>
+          </button>
+
+          <div className="h-5 w-[1px] bg-white/25 mx-1 hidden sm:block"></div>
+
           <button
             onClick={onLoadClick}
-            className="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow transition flex items-center gap-1.5"
+            className="bg-slate-700/90 hover:bg-slate-600 text-white text-xs font-semibold py-1.5 px-3 rounded shadow transition flex items-center gap-1.5"
             title="Load saved .cv draft file"
           >
             <span>📂</span>
-            <span>Load (.cv)</span>
+            <span className="hidden sm:inline">Load (.cv)</span>
           </button>
 
           <button
@@ -66,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
             title="Save draft to .cv file"
           >
             <span>💾</span>
-            <span>Save (.cv)</span>
+            <span className="hidden sm:inline">Save (.cv)</span>
           </button>
 
           <button

@@ -132,3 +132,21 @@ export interface SavedDraft {
   data: CVData;
   lastUpdated: string;
 }
+
+export interface StudentCVDoc {
+  id: string;
+  name: string;
+  template: TemplateType;
+  accentColor: string;
+  photoDataUrl: string;
+  data: CVData;
+  updatedAt: string;
+}
+
+export interface StudentAccountInfo {
+  email: string;
+  fullName?: string;
+  lastLogin: string;
+  cvCount: number;
+}
+
