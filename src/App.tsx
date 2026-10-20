@@ -462,9 +462,8 @@ export default function App() {
     showToast('Downloaded ATS Vector PDF!');
   };
 
-  // Print to PDF via Browser Native Print Engine
+  // Print to PDF: Triggers the browser's native print screen
   const handlePrintPdf = () => {
-    showToast('Opening Print / Save-to-PDF Dialog...');
     printCVNative();
   };
 

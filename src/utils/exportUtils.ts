@@ -469,16 +469,183 @@ export async function exportToPDF(cvData: CVData, accentColorHex?: string, photo
 
 /**
  * Native Vector Print / Save as PDF Function.
- * Triggers the browser's native print engine with 100% vector typography, 
- * sharp SVG logos, selectable text, and exact A4 page breaks with ZERO canvas distortion.
+ * Triggers the browser's native print screen (Destination: "Save as PDF" / Print)
+ * for a 100% exact 1:1 match of the live preview with vector typography,
+ * sharp SVG logos, selectable text, and exact A4 page breaks.
  */
 export function printCVNative(): void {
-  try {
-    // Ensure all styles and fonts are ready, then trigger native print
+  const wrapper = document.getElementById('cv-preview-wrapper');
+  if (!wrapper) {
     window.print();
-  } catch (e) {
-    console.error("Print trigger error:", e);
-    window.print();
+    return;
   }
+
+  // Gather all CSS rules inline directly from loaded stylesheets so external network requests are NOT needed
+  let inlineCss = '';
+  try {
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      const sheet = document.styleSheets[i];
+      try {
+        if (sheet.cssRules) {
+          for (let j = 0; j < sheet.cssRules.length; j++) {
+            inlineCss += sheet.cssRules[j].cssText + '\n';
+          }
+        }
+      } catch (e) {
+        // Cross-origin styles fallback
+      }
+    }
+  } catch (e) {
+    console.warn('Could not read styleSheets:', e);
+  }
+
+  // Also include any inline <style> tags from the host document
+  const styleTags = Array.from(document.querySelectorAll('style'))
+    .map(s => s.innerHTML)
+    .join('\n');
+
+  const printDocumentHtml = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Murdoch University Dubai - CV</title>
+        <style>
+          ${inlineCss}
+          ${styleTags}
+        </style>
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 0mm !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-sizing: border-box !important;
+          }
+          html, body {
+            background: #ffffff !important;
+            color: #222222 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+          }
+          .page-badge, .no-print, button {
+            display: none !important;
+          }
+          #cv-preview-wrapper {
+            transform: none !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            display: block !important;
+          }
+          .cv-paper {
+            box-shadow: none !important;
+            padding: 14mm 16mm !important;
+            margin: 0 auto !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            min-height: 297mm !important;
+            max-height: 297mm !important;
+            box-sizing: border-box !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            overflow: hidden !important;
+            position: relative !important;
+            border: none !important;
+            background: #ffffff !important;
+          }
+          .cv-paper:last-child {
+            page-break-after: avoid !important;
+            break-after: auto !important;
+          }
+          .cv-item, .cv-section-title {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+        </style>
+      </head>
+      <body>
+        <div id="cv-preview-wrapper">
+          ${wrapper.innerHTML}
+        </div>
+      </body>
+    </html>
+  `;
+
+  // 1. Try dedicated pop-up window first (standard print workflow)
+  try {
+    const printWin = window.open('', '_blank', 'width=950,height=1050');
+    if (printWin) {
+      printWin.document.open();
+      printWin.document.write(printDocumentHtml);
+      printWin.document.close();
+
+      const triggerPopupPrint = () => {
+        try {
+          printWin.focus();
+          printWin.print();
+        } catch (err) {
+          console.warn('Popup print trigger error:', err);
+        }
+      };
+
+      // Ensure styles are painted before calling print
+      if (printWin.document.readyState === 'complete') {
+        setTimeout(triggerPopupPrint, 150);
+      } else {
+        printWin.onload = () => setTimeout(triggerPopupPrint, 150);
+        setTimeout(triggerPopupPrint, 350);
+      }
+      return;
+    }
+  } catch (e) {
+    console.warn('Pop-up window blocked, using iframe fallback...');
+  }
+
+  // 2. Off-screen rendered iframe fallback (for when popup is blocked by browser)
+  let iframe = document.getElementById('cv-print-engine-iframe') as HTMLIFrameElement;
+  if (iframe) {
+    iframe.remove();
+  }
+
+  iframe = document.createElement('iframe');
+  iframe.id = 'cv-print-engine-iframe';
+  iframe.style.position = 'fixed';
+  iframe.style.top = '-9999px';
+  iframe.style.left = '-9999px';
+  iframe.style.width = '210mm';
+  iframe.style.height = '297mm';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  try {
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(printDocumentHtml);
+      doc.close();
+
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (err) {
+          console.warn("Iframe print error, falling back to window.print():", err);
+          window.print();
+        }
+      }, 250);
+      return;
+    }
+  } catch (e) {
+    console.warn("Iframe fallback failed:", e);
+  }
+
+  // 3. Fallback: print directly from active window
+  window.print();
 }
 

@@ -4,6 +4,8 @@ import { accentColors } from '../../data/careerData';
 import { 
   ChevronDown, 
   ChevronUp, 
+  ChevronLeft,
+  ChevronRight,
   Plus, 
   Trash2, 
   ArrowUp, 
@@ -15,7 +17,8 @@ import {
   Layout, 
   Sparkles,
   Info,
-  Check
+  Check,
+  GripVertical
 } from 'lucide-react';
 
 interface CVEditorProps {
@@ -100,6 +103,73 @@ export const CVEditor: React.FC<CVEditorProps> = ({
     if (!sec.tags) return;
     const tags = sec.tags.filter((_, i) => i !== tagIndex);
     updateSection(secIndex, { tags });
+  };
+
+  // Drag and Drop state for bullets
+  const [draggedBullet, setDraggedBullet] = useState<{
+    type: 'experience' | 'projects' | 'bullets';
+    secIdx: number;
+    itemIdx?: number;
+    bIdx: number;
+  } | null>(null);
+
+  // Experience bullet reordering
+  const handleMoveExperienceBullet = (secIdx: number, itemIdx: number, fromIdx: number, toIdx: number) => {
+    const sec = cvData.sections[secIdx];
+    if (!sec.items || !sec.items[itemIdx]?.bullets) return;
+    const bullets = [...sec.items[itemIdx].bullets];
+    if (toIdx < 0 || toIdx >= bullets.length || fromIdx === toIdx) return;
+    const [moved] = bullets.splice(fromIdx, 1);
+    bullets.splice(toIdx, 0, moved);
+    const updatedItems = [...sec.items];
+    updatedItems[itemIdx] = { ...updatedItems[itemIdx], bullets };
+    updateSection(secIdx, { items: updatedItems });
+  };
+
+  // Projects & Competency Blocks bullet reordering
+  const handleMoveProjectBullet = (secIdx: number, itemIdx: number, fromIdx: number, toIdx: number) => {
+    const sec = cvData.sections[secIdx];
+    if (!sec.items || !sec.items[itemIdx]?.bullets) return;
+    const bullets = [...sec.items[itemIdx].bullets];
+    if (toIdx < 0 || toIdx >= bullets.length || fromIdx === toIdx) return;
+    const [moved] = bullets.splice(fromIdx, 1);
+    bullets.splice(toIdx, 0, moved);
+    const updatedItems = [...sec.items];
+    updatedItems[itemIdx] = { ...updatedItems[itemIdx], bullets };
+    updateSection(secIdx, { items: updatedItems });
+  };
+
+  // Custom standalone bullet section reordering
+  const handleMoveCustomBullet = (secIdx: number, fromIdx: number, toIdx: number) => {
+    const sec = cvData.sections[secIdx];
+    if (!sec.bullets) return;
+    const bullets = [...sec.bullets];
+    if (toIdx < 0 || toIdx >= bullets.length || fromIdx === toIdx) return;
+    const [moved] = bullets.splice(fromIdx, 1);
+    bullets.splice(toIdx, 0, moved);
+    updateSection(secIdx, { bullets });
+  };
+
+  // Generic Section Item reordering (Experiences, Projects, Education, Certificates)
+  const handleMoveSectionItem = (secIdx: number, fromIdx: number, toIdx: number) => {
+    const sec = cvData.sections[secIdx];
+    if (!sec.items) return;
+    const items = [...sec.items];
+    if (toIdx < 0 || toIdx >= items.length || fromIdx === toIdx) return;
+    const [moved] = items.splice(fromIdx, 1);
+    items.splice(toIdx, 0, moved);
+    updateSection(secIdx, { items });
+  };
+
+  // Tag reordering (Skills, Languages)
+  const handleMoveTag = (secIdx: number, fromIdx: number, toIdx: number) => {
+    const sec = cvData.sections[secIdx];
+    if (!sec.tags) return;
+    const tags = [...sec.tags];
+    if (toIdx < 0 || toIdx >= tags.length || fromIdx === toIdx) return;
+    const [moved] = tags.splice(fromIdx, 1);
+    tags.splice(toIdx, 0, moved);
+    updateSection(secIdx, { tags });
   };
 
   return (
@@ -427,25 +497,52 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                         </label>
                       </div>
 
-                      {(sec.items || []).map((item, itemIdx) => (
-                        <div key={item.id || itemIdx} className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5 shadow-2xs">
-                          <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                            <span className="font-bold text-[11px] text-blue-900 uppercase tracking-wide">
-                              Degree #{itemIdx + 1}
-                            </span>
-                            {(sec.items || []).length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updatedItems = sec.items?.filter((_, i) => i !== itemIdx);
-                                  updateSection(secIdx, { items: updatedItems });
-                                }}
-                                className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3 h-3" /> Remove
-                              </button>
-                            )}
-                          </div>
+                      {(sec.items || []).map((item, itemIdx) => {
+                        const isFirst = itemIdx === 0;
+                        const isLast = itemIdx === (sec.items?.length || 1) - 1;
+                        return (
+                          <div key={item.id || itemIdx} className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5 shadow-2xs">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                {(sec.items || []).length > 1 && (
+                                  <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded border border-slate-200">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => handleMoveSectionItem(secIdx, itemIdx, itemIdx - 1)}
+                                      className={`p-0.5 rounded transition ${isFirst ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move degree up"
+                                    >
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => handleMoveSectionItem(secIdx, itemIdx, itemIdx + 1)}
+                                      className={`p-0.5 rounded transition ${isLast ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move degree down"
+                                    >
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                                <span className="font-bold text-[11px] text-blue-900 uppercase tracking-wide">
+                                  Degree #{itemIdx + 1}
+                                </span>
+                              </div>
+                              {(sec.items || []).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedItems = sec.items?.filter((_, i) => i !== itemIdx);
+                                    updateSection(secIdx, { items: updatedItems });
+                                  }}
+                                  className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Remove
+                                </button>
+                              )}
+                            </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div className="sm:col-span-2">
@@ -541,7 +638,8 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                    })}
 
                       <button
                         type="button"
@@ -568,23 +666,50 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   {/* EXPERIENCE TYPE */}
                   {sec.type === 'experience' && (
                     <div className="space-y-3.5">
-                      {(sec.items || []).map((item, itemIdx) => (
-                        <div key={item.id || itemIdx} className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-3 shadow-2xs">
-                          <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                            <span className="font-bold text-[11px] text-blue-900 uppercase tracking-wide">
-                              Role #{itemIdx + 1}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updatedItems = sec.items?.filter((_, i) => i !== itemIdx);
-                                updateSection(secIdx, { items: updatedItems });
-                              }}
-                              className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1"
-                            >
-                              <Trash2 className="w-3 h-3" /> Remove Position
-                            </button>
-                          </div>
+                      {(sec.items || []).map((item, itemIdx) => {
+                        const isFirst = itemIdx === 0;
+                        const isLast = itemIdx === (sec.items?.length || 1) - 1;
+                        return (
+                          <div key={item.id || itemIdx} className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-3 shadow-2xs">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                {(sec.items || []).length > 1 && (
+                                  <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded border border-slate-200">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => handleMoveSectionItem(secIdx, itemIdx, itemIdx - 1)}
+                                      className={`p-0.5 rounded transition ${isFirst ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move role up"
+                                    >
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => handleMoveSectionItem(secIdx, itemIdx, itemIdx + 1)}
+                                      className={`p-0.5 rounded transition ${isLast ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move role down"
+                                    >
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                                <span className="font-bold text-[11px] text-blue-900 uppercase tracking-wide">
+                                  Role #{itemIdx + 1}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedItems = sec.items?.filter((_, i) => i !== itemIdx);
+                                  updateSection(secIdx, { items: updatedItems });
+                                }}
+                                className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove Position
+                              </button>
+                            </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <input
@@ -639,33 +764,87 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                               Bullet Points:
                             </div>
 
-                            {(item.bullets || []).map((bullet: string, bIdx: number) => (
-                              <div key={bIdx} className="flex items-start gap-2">
-                                <span className="text-blue-500 mt-2 text-xs font-black">•</span>
-                                <textarea
-                                  rows={2}
-                                  value={bullet}
-                                  onChange={(e) => {
-                                    const updated = [...(sec.items || [])];
-                                    updated[itemIdx].bullets[bIdx] = e.target.value;
-                                    updateSection(secIdx, { items: updated });
+                            {(item.bullets || []).map((bullet: string, bIdx: number) => {
+                              const isFirst = bIdx === 0;
+                              const isLast = bIdx === (item.bullets?.length || 1) - 1;
+                              return (
+                                <div 
+                                  key={bIdx} 
+                                  draggable
+                                  onDragStart={(e) => {
+                                    setDraggedBullet({ type: 'experience', secIdx, itemIdx, bIdx });
+                                    e.dataTransfer.effectAllowed = 'move';
                                   }}
-                                  placeholder="Action Verb + Operational Context + Quantifiable Result..."
-                                  className="w-full text-xs border border-slate-300 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = [...(sec.items || [])];
-                                    updated[itemIdx].bullets = updated[itemIdx].bullets.filter((_: any, i: number) => i !== bIdx);
-                                    updateSection(secIdx, { items: updated });
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
                                   }}
-                                  className="p-1 text-slate-400 hover:text-red-500 mt-1"
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    if (draggedBullet && draggedBullet.type === 'experience' && draggedBullet.secIdx === secIdx && draggedBullet.itemIdx === itemIdx && draggedBullet.bIdx !== bIdx) {
+                                      handleMoveExperienceBullet(secIdx, itemIdx, draggedBullet.bIdx, bIdx);
+                                    }
+                                    setDraggedBullet(null);
+                                  }}
+                                  className="flex items-start gap-1.5 p-1.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-lg border border-slate-200 transition-colors group"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
+                                  {/* Reorder Buttons & Drag Handle */}
+                                  <div className="flex flex-col items-center justify-center pt-0.5 select-none shrink-0">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => handleMoveExperienceBullet(secIdx, itemIdx, bIdx, bIdx - 1)}
+                                      className={`p-0.5 rounded transition ${isFirst ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move bullet up"
+                                    >
+                                      <ChevronUp className="w-3 h-3" />
+                                    </button>
+                                    
+                                    <div 
+                                      className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 p-0.5 my-0.5"
+                                      title="Drag to reorder bullet"
+                                    >
+                                      <GripVertical className="w-3 h-3" />
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => handleMoveExperienceBullet(secIdx, itemIdx, bIdx, bIdx + 1)}
+                                      className={`p-0.5 rounded transition ${isLast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move bullet down"
+                                    >
+                                      <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
+
+                                  <textarea
+                                    rows={2}
+                                    value={bullet}
+                                    onChange={(e) => {
+                                      const updated = [...(sec.items || [])];
+                                      updated[itemIdx].bullets[bIdx] = e.target.value;
+                                      updateSection(secIdx, { items: updated });
+                                    }}
+                                    placeholder="Action Verb + Operational Context + Quantifiable Result..."
+                                    className="w-full text-xs border border-slate-300 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                  />
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...(sec.items || [])];
+                                      updated[itemIdx].bullets = updated[itemIdx].bullets.filter((_: any, i: number) => i !== bIdx);
+                                      updateSection(secIdx, { items: updated });
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-red-500 mt-1 shrink-0"
+                                    title="Delete bullet"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              );
+                            })}
 
                             <button
                               type="button"
@@ -680,7 +859,8 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                             </button>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
 
                       <button
                         type="button"
@@ -705,23 +885,50 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   {/* PROJECTS & COMPETENCY BLOCKS */}
                   {(sec.type === 'projects' || sec.type === 'competency_blocks') && (
                     <div className="space-y-3">
-                      {(sec.items || []).map((item, itemIdx) => (
-                        <div key={item.id || itemIdx} className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5 shadow-2xs">
-                          <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                            <span className="font-bold text-[11px] text-blue-900 uppercase tracking-wide">
-                              {sec.type === 'projects' ? 'Project' : 'Competency Block'} #{itemIdx + 1}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updatedItems = sec.items?.filter((_, i) => i !== itemIdx);
-                                updateSection(secIdx, { items: updatedItems });
-                              }}
-                              className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1"
-                            >
-                              <Trash2 className="w-3 h-3" /> Remove
-                            </button>
-                          </div>
+                      {(sec.items || []).map((item, itemIdx) => {
+                        const isFirst = itemIdx === 0;
+                        const isLast = itemIdx === (sec.items?.length || 1) - 1;
+                        return (
+                          <div key={item.id || itemIdx} className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5 shadow-2xs">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                {(sec.items || []).length > 1 && (
+                                  <div className="flex items-center gap-0.5 bg-slate-100 p-0.5 rounded border border-slate-200">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => handleMoveSectionItem(secIdx, itemIdx, itemIdx - 1)}
+                                      className={`p-0.5 rounded transition ${isFirst ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title={`Move ${sec.type === 'projects' ? 'project' : 'block'} up`}
+                                    >
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => handleMoveSectionItem(secIdx, itemIdx, itemIdx + 1)}
+                                      className={`p-0.5 rounded transition ${isLast ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title={`Move ${sec.type === 'projects' ? 'project' : 'block'} down`}
+                                    >
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                                <span className="font-bold text-[11px] text-blue-900 uppercase tracking-wide">
+                                  {sec.type === 'projects' ? 'Project' : 'Competency Block'} #{itemIdx + 1}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedItems = sec.items?.filter((_, i) => i !== itemIdx);
+                                  updateSection(secIdx, { items: updatedItems });
+                                }}
+                                className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3 h-3" /> Remove
+                              </button>
+                            </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <input
@@ -750,33 +957,87 @@ export const CVEditor: React.FC<CVEditorProps> = ({
 
                           {/* Bullets */}
                           <div className="space-y-2 pt-2 border-t border-slate-100">
-                            {(item.bullets || []).map((bullet: string, bIdx: number) => (
-                              <div key={bIdx} className="flex items-start gap-2">
-                                <span className="text-blue-500 mt-2 text-xs font-black">•</span>
-                                <textarea
-                                  rows={2}
-                                  value={bullet}
-                                  onChange={(e) => {
-                                    const updated = [...(sec.items || [])];
-                                    updated[itemIdx].bullets[bIdx] = e.target.value;
-                                    updateSection(secIdx, { items: updated });
+                            {(item.bullets || []).map((bullet: string, bIdx: number) => {
+                              const isFirst = bIdx === 0;
+                              const isLast = bIdx === (item.bullets?.length || 1) - 1;
+                              return (
+                                <div 
+                                  key={bIdx} 
+                                  draggable
+                                  onDragStart={(e) => {
+                                    setDraggedBullet({ type: 'projects', secIdx, itemIdx, bIdx });
+                                    e.dataTransfer.effectAllowed = 'move';
                                   }}
-                                  placeholder="Key methodology, tools used, and quantifiable outcome..."
-                                  className="w-full text-xs border border-slate-300 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = [...(sec.items || [])];
-                                    updated[itemIdx].bullets = updated[itemIdx].bullets.filter((_: any, i: number) => i !== bIdx);
-                                    updateSection(secIdx, { items: updated });
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
                                   }}
-                                  className="p-1 text-slate-400 hover:text-red-500 mt-1"
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    if (draggedBullet && draggedBullet.type === 'projects' && draggedBullet.secIdx === secIdx && draggedBullet.itemIdx === itemIdx && draggedBullet.bIdx !== bIdx) {
+                                      handleMoveProjectBullet(secIdx, itemIdx, draggedBullet.bIdx, bIdx);
+                                    }
+                                    setDraggedBullet(null);
+                                  }}
+                                  className="flex items-start gap-1.5 p-1.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-lg border border-slate-200 transition-colors group"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
+                                  {/* Reorder Buttons & Drag Handle */}
+                                  <div className="flex flex-col items-center justify-center pt-0.5 select-none shrink-0">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => handleMoveProjectBullet(secIdx, itemIdx, bIdx, bIdx - 1)}
+                                      className={`p-0.5 rounded transition ${isFirst ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move bullet up"
+                                    >
+                                      <ChevronUp className="w-3 h-3" />
+                                    </button>
+                                    
+                                    <div 
+                                      className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 p-0.5 my-0.5"
+                                      title="Drag to reorder bullet"
+                                    >
+                                      <GripVertical className="w-3 h-3" />
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => handleMoveProjectBullet(secIdx, itemIdx, bIdx, bIdx + 1)}
+                                      className={`p-0.5 rounded transition ${isLast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                      title="Move bullet down"
+                                    >
+                                      <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
+
+                                  <textarea
+                                    rows={2}
+                                    value={bullet}
+                                    onChange={(e) => {
+                                      const updated = [...(sec.items || [])];
+                                      updated[itemIdx].bullets[bIdx] = e.target.value;
+                                      updateSection(secIdx, { items: updated });
+                                    }}
+                                    placeholder="Key methodology, tools used, and quantifiable outcome..."
+                                    className="w-full text-xs border border-slate-300 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                  />
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...(sec.items || [])];
+                                      updated[itemIdx].bullets = updated[itemIdx].bullets.filter((_: any, i: number) => i !== bIdx);
+                                      updateSection(secIdx, { items: updated });
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-red-500 mt-1 shrink-0"
+                                    title="Delete bullet"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              );
+                            })}
 
                             <button
                               type="button"
@@ -791,7 +1052,8 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                             </button>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
 
                       <button
                         type="button"
@@ -814,42 +1076,69 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   {/* CERT_LIST TYPE */}
                   {sec.type === 'cert_list' && (
                     <div className="space-y-2.5">
-                      {(sec.items || []).map((c, cIdx) => (
-                        <div key={c.id || cIdx} className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-slate-200">
-                          <input
-                            type="text"
-                            value={c.title}
-                            onChange={(e) => {
-                              const updated = [...(sec.items || [])];
-                              updated[cIdx].title = e.target.value;
-                              updateSection(secIdx, { items: updated });
-                            }}
-                            placeholder="Certificate Name / Issuer"
-                            className="flex-1 text-xs border border-slate-300 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none"
-                          />
-                          <input
-                            type="text"
-                            value={c.dates || ''}
-                            onChange={(e) => {
-                              const updated = [...(sec.items || [])];
-                              updated[cIdx].dates = e.target.value;
-                              updateSection(secIdx, { items: updated });
-                            }}
-                            placeholder="Year (e.g. 2024)"
-                            className="w-28 text-xs border border-slate-300 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = sec.items?.filter((_, i) => i !== cIdx);
-                              updateSection(secIdx, { items: updated });
-                            }}
-                            className="p-1 text-slate-400 hover:text-red-500"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
+                      {(sec.items || []).map((c, cIdx) => {
+                        const isFirst = cIdx === 0;
+                        const isLast = cIdx === (sec.items?.length || 1) - 1;
+                        return (
+                          <div key={c.id || cIdx} className="flex items-center gap-2 bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
+                            {(sec.items || []).length > 1 && (
+                              <div className="flex flex-col items-center justify-center select-none shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={isFirst}
+                                  onClick={() => handleMoveSectionItem(secIdx, cIdx, cIdx - 1)}
+                                  className={`p-0.5 rounded transition ${isFirst ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100 cursor-pointer'}`}
+                                  title="Move certificate up"
+                                >
+                                  <ChevronUp className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isLast}
+                                  onClick={() => handleMoveSectionItem(secIdx, cIdx, cIdx + 1)}
+                                  className={`p-0.5 rounded transition ${isLast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100 cursor-pointer'}`}
+                                  title="Move certificate down"
+                                >
+                                  <ChevronDown className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                            <input
+                              type="text"
+                              value={c.title}
+                              onChange={(e) => {
+                                const updated = [...(sec.items || [])];
+                                updated[cIdx].title = e.target.value;
+                                updateSection(secIdx, { items: updated });
+                              }}
+                              placeholder="Certificate Name / Issuer"
+                              className="flex-1 text-xs border border-slate-300 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none"
+                            />
+                            <input
+                              type="text"
+                              value={c.dates || ''}
+                              onChange={(e) => {
+                                const updated = [...(sec.items || [])];
+                                updated[cIdx].dates = e.target.value;
+                                updateSection(secIdx, { items: updated });
+                              }}
+                              placeholder="Year (e.g. 2024)"
+                              className="w-28 text-xs border border-slate-300 rounded p-1.5 focus:ring-1 focus:ring-blue-500 outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = sec.items?.filter((_, i) => i !== cIdx);
+                                updateSection(secIdx, { items: updated });
+                              }}
+                              className="p-1 text-slate-400 hover:text-red-500 shrink-0"
+                              title="Delete certificate"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
 
                       <button
                         type="button"
@@ -891,21 +1180,48 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                       </div>
 
                       <div className="flex flex-wrap gap-2 pt-1">
-                        {(sec.tags || []).map((tag, tIdx) => (
-                          <span
-                            key={tIdx}
-                            className="inline-flex items-center gap-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-medium px-3 py-1 rounded-full shadow-2xs group hover:border-slate-400 transition-colors"
-                          >
-                            <span>{tag}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTag(secIdx, tIdx)}
-                              className="text-slate-400 hover:text-red-500 font-black ml-0.5"
+                        {(sec.tags || []).map((tag, tIdx) => {
+                          const isFirst = tIdx === 0;
+                          const isLast = tIdx === (sec.tags?.length || 1) - 1;
+                          return (
+                            <span
+                              key={tIdx}
+                              className="inline-flex items-center gap-1 bg-white border border-slate-300 text-slate-700 text-xs font-medium pl-1.5 pr-2 py-1 rounded-full shadow-2xs group hover:border-slate-400 transition-colors"
                             >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
+                              {(sec.tags || []).length > 1 && (
+                                <div className="flex items-center gap-0.5 select-none">
+                                  <button
+                                    type="button"
+                                    disabled={isFirst}
+                                    onClick={() => handleMoveTag(secIdx, tIdx, tIdx - 1)}
+                                    className={`p-0.5 rounded transition ${isFirst ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100 cursor-pointer'}`}
+                                    title="Move item left"
+                                  >
+                                    <ChevronLeft className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isLast}
+                                    onClick={() => handleMoveTag(secIdx, tIdx, tIdx + 1)}
+                                    className={`p-0.5 rounded transition ${isLast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100 cursor-pointer'}`}
+                                    title="Move item right"
+                                  >
+                                    <ChevronRight className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                              <span className="mx-1 font-semibold">{tag}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTag(secIdx, tIdx)}
+                                className="text-slate-400 hover:text-red-500 font-black ml-0.5"
+                                title="Remove tag"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -913,32 +1229,86 @@ export const CVEditor: React.FC<CVEditorProps> = ({
                   {/* BULLETS TYPE (Simple custom bullets) */}
                   {sec.type === 'bullets' && (
                     <div className="space-y-2.5">
-                      {(sec.bullets || []).map((bullet, bIdx) => (
-                        <div key={bIdx} className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-2 text-xs font-black">•</span>
-                          <textarea
-                            rows={2}
-                            value={bullet}
-                            onChange={(e) => {
-                              const updated = [...(sec.bullets || [])];
-                              updated[bIdx] = e.target.value;
-                              updateSection(secIdx, { bullets: updated });
+                      {(sec.bullets || []).map((bullet, bIdx) => {
+                        const isFirst = bIdx === 0;
+                        const isLast = bIdx === (sec.bullets?.length || 1) - 1;
+                        return (
+                          <div 
+                            key={bIdx} 
+                            draggable
+                            onDragStart={(e) => {
+                              setDraggedBullet({ type: 'bullets', secIdx, bIdx });
+                              e.dataTransfer.effectAllowed = 'move';
                             }}
-                            placeholder="Milestone, leadership duty, or accomplishment..."
-                            className="w-full text-xs border border-slate-300 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = sec.bullets?.filter((_, i) => i !== bIdx);
-                              updateSection(secIdx, { bullets: updated });
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = 'move';
                             }}
-                            className="p-1 text-slate-400 hover:text-red-500 mt-1"
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (draggedBullet && draggedBullet.type === 'bullets' && draggedBullet.secIdx === secIdx && draggedBullet.bIdx !== bIdx) {
+                                handleMoveCustomBullet(secIdx, draggedBullet.bIdx, bIdx);
+                              }
+                              setDraggedBullet(null);
+                            }}
+                            className="flex items-start gap-1.5 p-1.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-lg border border-slate-200 transition-colors group"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
+                            {/* Reorder Buttons & Drag Handle */}
+                            <div className="flex flex-col items-center justify-center pt-0.5 select-none shrink-0">
+                              <button
+                                type="button"
+                                disabled={isFirst}
+                                onClick={() => handleMoveCustomBullet(secIdx, bIdx, bIdx - 1)}
+                                className={`p-0.5 rounded transition ${isFirst ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                title="Move bullet up"
+                              >
+                                <ChevronUp className="w-3 h-3" />
+                              </button>
+                              
+                              <div 
+                                className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 p-0.5 my-0.5"
+                                title="Drag to reorder bullet"
+                              >
+                                <GripVertical className="w-3 h-3" />
+                              </div>
+
+                              <button
+                                type="button"
+                                disabled={isLast}
+                                onClick={() => handleMoveCustomBullet(secIdx, bIdx, bIdx + 1)}
+                                className={`p-0.5 rounded transition ${isLast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-blue-600 hover:bg-white cursor-pointer shadow-2xs'}`}
+                                title="Move bullet down"
+                              >
+                                <ChevronDown className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            <textarea
+                              rows={2}
+                              value={bullet}
+                              onChange={(e) => {
+                                const updated = [...(sec.bullets || [])];
+                                updated[bIdx] = e.target.value;
+                                updateSection(secIdx, { bullets: updated });
+                              }}
+                              placeholder="Milestone, leadership duty, or accomplishment..."
+                              className="w-full text-xs border border-slate-300 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = sec.bullets?.filter((_, i) => i !== bIdx);
+                                updateSection(secIdx, { bullets: updated });
+                              }}
+                              className="p-1 text-slate-400 hover:text-red-500 mt-1 shrink-0"
+                              title="Delete bullet"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
 
                       <button
                         type="button"

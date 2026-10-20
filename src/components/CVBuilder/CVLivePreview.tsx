@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CVData, PhotoShape } from '../../types';
 import { formatBulletText, escapeHtml } from '../../utils/exportUtils';
 import { MurdochLogo } from '../MurdochLogo';
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Printer } from 'lucide-react';
 
 interface CVLivePreviewProps {
   cvData: CVData;
@@ -498,6 +498,18 @@ export const CVLivePreview: React.FC<CVLivePreviewProps> = ({
             <RotateCcw className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Fit</span>
           </button>
+
+          {onPrintPdf && (
+            <button
+              type="button"
+              onClick={onPrintPdf}
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold py-1 px-2.5 rounded shadow-xs transition flex items-center gap-1.5 ml-2 border border-amber-300 cursor-pointer"
+              title="Open Print Dialog to Save as PDF"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print to PDF</span>
+            </button>
+          )}
         </div>
       </div>
 
